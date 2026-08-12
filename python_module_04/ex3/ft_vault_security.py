@@ -1,7 +1,9 @@
 def secure_archive(
-    path: str, mode: str = "r", payload: str = ""
+    path: str, mode: int | str = "r", payload: str = ""
 ) -> tuple[bool, str]:
-    if mode == "r":
+    read_mode = mode in ("r", "read", 0)
+    write_mode = mode in ("w", "write", 1)
+    if read_mode:
         try:
             with open(path, "r") as vault_file:
                 print("Using 'secure_archive' to read from a regular file:")
@@ -12,7 +14,7 @@ def secure_archive(
         except PermissionError as error:
             print("Using 'secure_archive' to read from an inaccessible file:")
             return (False, f"{error}")
-    elif mode == "w":
+    elif write_mode:
         try:
             with open(path, "w") as vault_file:
                 vault_file.write(payload)
