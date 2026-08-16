@@ -94,7 +94,32 @@ make build
 
 The application reads one `KEY=VALUE` pair per line from a plain text file
 (default: `config.txt`, committed at the repo root). Blank lines and lines
-starting with `#` are ignored.
+starting with `#` are ignored. Below is the complete structure and format
+of the config file: a full example first, then every supported key.
+
+### Complete configuration example
+
+```text
+# Maze dimensions (WIDTH: 1-40, HEIGHT: 1-25)
+WIDTH=25
+HEIGHT=15
+
+# Entry and exit coordinates (x,y), inside the maze, must differ
+ENTRY=0,0
+EXIT=24,14
+
+# Output file for the exported maze
+OUTPUT_FILE=maze.txt
+
+# True = perfect maze (single path); False = Pac-Man-ready board (default)
+PERFECT=False
+
+# Optional keys
+SEED=42
+ALGORITHM=BFS
+MIN_LOOPS=3
+ANIMATE=False
+```
 
 ### Required keys
 
@@ -367,19 +392,17 @@ it overlapped a protected cell.
 
 ### AI usage
 
-An AI assistant (Claude) was used during development for:
+An AI assistant (Claude) was used during development. Below is exactly
+which tasks it was used for and which parts of the project each one
+touched:
 
-- comparing two independently-written first drafts against the subject's
-  requirements and identifying concrete gaps (missing 40×25 size
-  validation, a mis-named reusable package, a "42" pattern placement that
-  could silently punch a hole in the digit shape, an unverified loop-count
-  guarantee in non-perfect mode);
-- merging the two drafts into this final version — combining the
-  small-module architecture and cycle-rank loop guarantee from one draft
-  with the Pydantic-based config validation and box-drawing renderer style
-  of the other, and rewriting the parts identified as weak;
-- writing this README and cross-checking it against the subject's required
-  sections.
+| Task | Part of the project |
+|---|---|
+| Reading the subject PDF in full and extracting every hard requirement (exact filenames, package naming, hex bit layout, the 40×25 size cap, the non-perfect-mode loop/dead-end rules) into a checklist used for the rest of development | Project-wide reference, not shipped code |
+| Reviewing two independently-written first drafts against that checklist and identifying concrete gaps: missing 40×25 size validation, a reusable package named `a-maze-ing` instead of the required `mazegen-*`, a "42" pattern placement that could silently punch a hole in the digit shape when it overlapped a protected cell, and an unverified (heuristic-only) loop-count guarantee in non-perfect mode | `mazegen/config.py`, `pyproject.toml`, `mazegen/utils.py`, `mazegen/generator.py` |
+| Merging the two drafts into this final version: keeping the small single-responsibility module layout and the cycle-rank loop guarantee from one draft, combined with the Pydantic-based config validation and box-drawing renderer style of the other, and rewriting the parts identified as weak above | `mazegen/` package as a whole, `a_maze_ing.py` |
+| Writing the pytest suite covering the spanning-tree property, wall coherence, the no-3×3-open-area rule, the `MIN_LOOPS` guarantee, and config validation | `tests/test_maze.py` |
+| Writing this README and cross-checking it section by section against the subject's required README content (Chapter VII) | `README.md` |
 
 All AI-assisted code and documentation were reviewed, run against
 `flake8`/`mypy`/`pytest`, and manually exercised (both `PERFECT` modes, both
