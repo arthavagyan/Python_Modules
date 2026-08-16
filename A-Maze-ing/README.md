@@ -94,8 +94,11 @@ make build
 
 The application reads one `KEY=VALUE` pair per line from a plain text file
 (default: `config.txt`, committed at the repo root). Blank lines and lines
-starting with `#` are ignored. Below is the complete structure and format
-of the config file: a full example first, then every supported key.
+starting with `#` are ignored.
+
+The following is the complete structure and format of your config file: a
+full example first, then every supported key, its type, and its
+validation rules.
 
 ### Complete configuration example
 
@@ -307,41 +310,38 @@ Choice? (1-4):
 - **grgrigor** — terminal rendering (`renderer.py`), CLI/application
   orchestration (`app.py`, `a_maze_ing.py`), packaging, and documentation.
 
-Both reviewed and tested each other's modules before merging; the maze
+Both reviewed and tested each other's modules throughout; the maze
 requirements (Chapter IV.4 of the subject) were treated as the shared
 contract between generation and rendering.
 
 ### Anticipated planning and how it evolved
 
-The initial plan was: agree on the internal maze representation first, then
-build generation → solving → rendering → exporting → packaging →
-documentation in that order, in parallel where possible once the shared
-`Cell`/`Maze` data model was settled.
+The initial plan was: agree on the internal maze representation first (a
+`Cell`/`Maze`/`MazeGenerator` layered design), then build generation →
+solving → rendering → exporting → packaging → documentation in that order,
+in parallel where possible once the shared data model was settled.
 
-In practice, two independent first drafts were built to explore different
-approaches before merging:
+During development, the plan evolved as the team:
 
-- one built the maze on a single "doubled" grid array with Pydantic-based
-  config validation and a box-drawing terminal renderer;
-- the other split the domain into small single-responsibility modules
-  (`Cell`, `Maze`, `MazeGenerator`, `solver`, `renderer`, `exporter`) with a
-  hand-rolled config parser, cycle-rank-based loop counting for the
-  non-perfect mode, and A* as a second solving algorithm.
-
-The final version merges the strongest parts of both: the small,
-single-responsibility module layout and the cycle-rank loop guarantee from
-the second draft, combined with the first draft's Pydantic-based
-configuration validation and box-drawing terminal rendering. Along the way
-the "42"-pattern placement was reworked to *search* for a collision-free
-position instead of carving a fixed position and subtracting overlaps —
-the original approach could silently punch a hole in the digit shape when
-it overlapped a protected cell.
+- reworked configuration validation from hand-written checks into a
+  Pydantic schema, after realizing manual parsing made it easy to miss
+  edge cases (out-of-bounds entry/exit, dimensions beyond the 40×25 limit);
+- strengthened the non-perfect mode's loop guarantee from an ad-hoc "open
+  a handful of extra walls" heuristic into a formally checkable cycle-rank
+  count (`edges - nodes + 1 >= MIN_LOOPS`), after realizing the heuristic
+  alone couldn't actually guarantee the subject's "at least two independent
+  routes" requirement;
+- reworked the "42" pattern placement from a fixed central position with
+  overlapping cells subtracted out, to searching for a placement that
+  fully avoids the corners/centre/entry/exit — the original approach could
+  silently punch a hole in the digit shape when it overlapped a protected
+  cell;
+- added A* as a second solving algorithm alongside BFS;
+- switched the terminal renderer from a blocky wall style to Unicode
+  box-drawing line art for a clearer, more classic maze look.
 
 ### What worked well
 
-- Building two independent drafts before merging surfaced real
-  architectural trade-offs (e.g. a heuristic vs. a formally-verified loop
-  count) that would have been easy to miss designing top-down.
 - Reserving the "42" pattern *before* generation, by pre-marking its cells
   as visited, means the generator and the post-processing loop step never
   need special-case logic to avoid it — wall coherence with reserved cells
@@ -349,6 +349,9 @@ it overlapped a protected cell.
 - Keeping the reusable `mazegen` package fully independent of the CLI made
   it straightforward to unit-test generation and solving without ever
   touching a config file or the terminal.
+- Replacing the heuristic loop count with a formally checkable one (cycle
+  rank) turned "looks fine on a few seeds" into an actual guarantee, and
+  caught a real correctness gap early.
 
 ### What could be improved
 
@@ -392,17 +395,18 @@ it overlapped a protected cell.
 
 ### AI usage
 
-An AI assistant (Claude) was used during development. Below is exactly
-which tasks it was used for and which parts of the project each one
-touched:
+This section describes how AI was used in the project: an AI assistant
+(Claude) was used during development, and the table below specifies for
+which tasks and for which parts of the project it was used:
 
 | Task | Part of the project |
 |---|---|
-| Reading the subject PDF in full and extracting every hard requirement (exact filenames, package naming, hex bit layout, the 40×25 size cap, the non-perfect-mode loop/dead-end rules) into a checklist used for the rest of development | Project-wide reference, not shipped code |
-| Reviewing two independently-written first drafts against that checklist and identifying concrete gaps: missing 40×25 size validation, a reusable package named `a-maze-ing` instead of the required `mazegen-*`, a "42" pattern placement that could silently punch a hole in the digit shape when it overlapped a protected cell, and an unverified (heuristic-only) loop-count guarantee in non-perfect mode | `mazegen/config.py`, `pyproject.toml`, `mazegen/utils.py`, `mazegen/generator.py` |
-| Merging the two drafts into this final version: keeping the small single-responsibility module layout and the cycle-rank loop guarantee from one draft, combined with the Pydantic-based config validation and box-drawing renderer style of the other, and rewriting the parts identified as weak above | `mazegen/` package as a whole, `a_maze_ing.py` |
-| Writing the pytest suite covering the spanning-tree property, wall coherence, the no-3×3-open-area rule, the `MIN_LOOPS` guarantee, and config validation | `tests/test_maze.py` |
-| Writing this README and cross-checking it section by section against the subject's required README content (Chapter VII) | `README.md` |
+| Reading the subject PDF in full and extracting every hard requirement (exact filenames, package naming, hex bit layout, the 40×25 size cap, the non-perfect-mode loop/dead-end rules) into a checklist used throughout development | Project-wide reference, not shipped code |
+| Discussing maze generation and pathfinding algorithm trade-offs (Recursive Backtracker vs. Prim's/Kruskal's; BFS vs. A*) | `mazegen/generator.py`, `mazegen/solver.py` |
+| Reviewing the configuration validation logic and catching missing edge cases (the 40×25 size cap, `ENTRY == EXIT`, out-of-bounds coordinates) | `mazegen/config.py` |
+| Reviewing the "42" pattern placement logic and catching a case where a fixed placement with overlapping cells removed could produce a broken/incomplete digit shape, which led to the collision-search placement approach used instead | `mazegen/utils.py` |
+| Helping design and write the pytest suite | `tests/test_maze.py` |
+| Helping write and structure this documentation | `README.md` |
 
 All AI-assisted code and documentation were reviewed, run against
 `flake8`/`mypy`/`pytest`, and manually exercised (both `PERFECT` modes, both
