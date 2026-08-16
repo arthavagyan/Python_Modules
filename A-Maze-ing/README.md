@@ -90,6 +90,46 @@ make build
 | `make clean` | Remove caches and build artifacts |
 | `make re` | `clean` then `install` |
 
+## Resources
+
+### Documentation
+
+- [Python Standard Library documentation](https://docs.python.org/3/library/) —
+  `random.Random` for seeded generation (`generator.py`), `heapq` for the
+  A* priority queue and `collections.deque` for BFS (`solver.py`),
+  `pathlib` for config file handling (`config.py`).
+- [Pydantic documentation](https://docs.pydantic.dev/) — field/model
+  validators, custom error messages, used throughout `mazegen/config.py`.
+- [PEP 8](https://peps.python.org/pep-0008/) — style guide followed
+  throughout, and the basis for the `flake8` configuration.
+- [PEP 257](https://peps.python.org/pep-0257/) — docstring conventions
+  used across all `mazegen` modules.
+- [pytest documentation](https://docs.pytest.org/) — fixtures and
+  assertion patterns used in `tests/`.
+- Wikipedia — [Maze generation
+  algorithm](https://en.wikipedia.org/wiki/Maze_generation_algorithm) and
+  [Spanning tree](https://en.wikipedia.org/wiki/Spanning_tree) — background
+  for why the recursive backtracker produces a perfect maze.
+
+### AI usage
+
+This section describes how AI was used in the project: an AI assistant
+(Claude) was used during development, and the table below specifies for
+which tasks and for which parts of the project it was used:
+
+| Task | Part of the project |
+|---|---|
+| Reading the subject PDF in full and extracting every hard requirement (exact filenames, package naming, hex bit layout, the 40×25 size cap, the non-perfect-mode loop/dead-end rules) into a checklist used throughout development | Project-wide reference, not shipped code |
+| Discussing maze generation and pathfinding algorithm trade-offs (Recursive Backtracker vs. Prim's/Kruskal's; BFS vs. A*) | `mazegen/generator.py`, `mazegen/solver.py` |
+| Reviewing the configuration validation logic and catching missing edge cases (the 40×25 size cap, `ENTRY == EXIT`, out-of-bounds coordinates) | `mazegen/config.py` |
+| Reviewing the "42" pattern placement logic and catching a case where a fixed placement with overlapping cells removed could produce a broken/incomplete digit shape, which led to the collision-search placement approach used instead | `mazegen/utils.py` |
+| Helping design and write the pytest suite | `tests/test_maze.py` |
+| Helping write and structure this documentation | `README.md` |
+
+All AI-assisted code and documentation were reviewed, run against
+`flake8`/`mypy`/`pytest`, and manually exercised (both `PERFECT` modes, both
+solving algorithms, animation on/off) before being treated as final.
+
 ## Configuration file format
 
 The application reads one `KEY=VALUE` pair per line from a plain text file
@@ -158,9 +198,13 @@ traceback.
 
 ## Maze generation algorithm
 
-Mazes are carved with the **Recursive Backtracker** (an iterative DFS with
-an explicit stack, so there's no Python recursion-depth limit). It was
-chosen because it:
+The maze generation algorithm chosen for this project is the **Recursive
+Backtracker** (an iterative depth-first search using an explicit stack, so
+there's no Python recursion-depth limit).
+
+### Why this algorithm
+
+The Recursive Backtracker was chosen because it:
 
 - generates a perfect spanning tree in linear time;
 - is simple to reason about and to defend;
@@ -207,9 +251,9 @@ any maze produced by any generator.
 
 ## Reusable module (`mazegen`)
 
-The reusable part of the project is the `mazegen` package: it has no
-dependency on the CLI (`a_maze_ing.py`) or on config files, and can be
-imported into any other Python project.
+The part of the code that is reusable is the entire `mazegen` package: it
+has no dependency on the CLI (`a_maze_ing.py`) or on config files, and can
+be installed and imported into any other Python project independently.
 
 | Module | Responsibility |
 |---|---|
@@ -371,46 +415,6 @@ During development, the plan evolved as the team:
 - **pytest** — unit testing.
 - **flake8** / **mypy** — linting and static type checking.
 - **Git** — version control.
-
-## Resources
-
-### Documentation
-
-- [Python Standard Library documentation](https://docs.python.org/3/library/) —
-  `random.Random` for seeded generation (`generator.py`), `heapq` for the
-  A* priority queue and `collections.deque` for BFS (`solver.py`),
-  `pathlib` for config file handling (`config.py`).
-- [Pydantic documentation](https://docs.pydantic.dev/) — field/model
-  validators, custom error messages, used throughout `mazegen/config.py`.
-- [PEP 8](https://peps.python.org/pep-0008/) — style guide followed
-  throughout, and the basis for the `flake8` configuration.
-- [PEP 257](https://peps.python.org/pep-0257/) — docstring conventions
-  used across all `mazegen` modules.
-- [pytest documentation](https://docs.pytest.org/) — fixtures and
-  assertion patterns used in `tests/`.
-- Wikipedia — [Maze generation
-  algorithm](https://en.wikipedia.org/wiki/Maze_generation_algorithm) and
-  [Spanning tree](https://en.wikipedia.org/wiki/Spanning_tree) — background
-  for why the recursive backtracker produces a perfect maze.
-
-### AI usage
-
-This section describes how AI was used in the project: an AI assistant
-(Claude) was used during development, and the table below specifies for
-which tasks and for which parts of the project it was used:
-
-| Task | Part of the project |
-|---|---|
-| Reading the subject PDF in full and extracting every hard requirement (exact filenames, package naming, hex bit layout, the 40×25 size cap, the non-perfect-mode loop/dead-end rules) into a checklist used throughout development | Project-wide reference, not shipped code |
-| Discussing maze generation and pathfinding algorithm trade-offs (Recursive Backtracker vs. Prim's/Kruskal's; BFS vs. A*) | `mazegen/generator.py`, `mazegen/solver.py` |
-| Reviewing the configuration validation logic and catching missing edge cases (the 40×25 size cap, `ENTRY == EXIT`, out-of-bounds coordinates) | `mazegen/config.py` |
-| Reviewing the "42" pattern placement logic and catching a case where a fixed placement with overlapping cells removed could produce a broken/incomplete digit shape, which led to the collision-search placement approach used instead | `mazegen/utils.py` |
-| Helping design and write the pytest suite | `tests/test_maze.py` |
-| Helping write and structure this documentation | `README.md` |
-
-All AI-assisted code and documentation were reviewed, run against
-`flake8`/`mypy`/`pytest`, and manually exercised (both `PERFECT` modes, both
-solving algorithms, animation on/off) before being treated as final.
 
 ## License
 
