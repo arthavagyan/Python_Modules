@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# generated at runtime, not part of the submission
+maze.txt
