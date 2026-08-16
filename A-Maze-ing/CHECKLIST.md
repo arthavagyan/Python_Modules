@@ -8,6 +8,101 @@ for your own peace of mind.
 
 ---
 
+## Part 0 — How to run this project, step by step
+
+The `Makefile` (and the README) document running everything through
+[Poetry](https://python-poetry.org/), but Poetry isn't installed on this
+machine right now. Two paths below: the quick one that works immediately
+with a plain venv, and the canonical one via Poetry if you'd rather match
+the README exactly.
+
+### Option A — plain venv (works right now, no extra install)
+
+1. Open a terminal and go to the project folder:
+   ```bash
+   cd /home/arth/Yop/Python_Modules/A-Maze-ing
+   ```
+2. Create a virtual environment (one-time step):
+   ```bash
+   python3 -m venv .venv
+   ```
+3. Install the dependencies into it:
+   ```bash
+   .venv/bin/pip install pydantic flake8 mypy pytest
+   ```
+4. Run the application on the default config:
+   ```bash
+   .venv/bin/python3 a_maze_ing.py config.txt
+   ```
+   You should see the maze printed, then:
+   ```
+   === A-Maze-ing ===
+   1. Re-generate a new maze
+   2. Show / Hide the shortest path
+   3. Rotate the wall colours
+   4. Quit
+   Choice? (1-4):
+   ```
+   Type `1`, `2`, or `3` and press Enter to try each interaction; type `4`
+   to quit.
+5. (Optional) run it on a different config file the same way:
+   ```bash
+   .venv/bin/python3 a_maze_ing.py path/to/other_config.txt
+   ```
+6. (Optional) run the linters and tests the same way `make lint`/`make test`
+   would:
+   ```bash
+   .venv/bin/flake8 .
+   .venv/bin/mypy . --warn-return-any --warn-unused-ignores \
+       --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+   PYTHONPATH=. .venv/bin/pytest tests/ -v
+   ```
+7. (Optional) build the reusable package the same way `make build` would:
+   ```bash
+   .venv/bin/pip install build
+   .venv/bin/python3 -m build .
+   cp dist/mazegen-*.whl dist/mazegen-*.tar.gz .
+   ```
+
+`.venv/` is already listed in `.gitignore`, so it's never committed —
+delete it any time with `rm -rf .venv` and repeat steps 2-3 to rebuild it.
+
+### Option B — Poetry (matches the README/Makefile exactly)
+
+1. Install Poetry (one-time, only if you don't have it):
+   ```bash
+   curl -sSL https://install.python-poetry.org | python3 -
+   ```
+   Then restart your terminal (or `source ~/.bashrc` / `source ~/.zshrc`) so
+   the `poetry` command is on your `PATH`. Check it worked:
+   ```bash
+   poetry --version
+   ```
+2. From the project folder, install dependencies:
+   ```bash
+   cd /home/arth/Yop/Python_Modules/A-Maze-ing
+   make install
+   ```
+3. Run it:
+   ```bash
+   make run
+   ```
+4. Everything else from here on matches the README 1:1:
+   ```bash
+   make lint
+   make lint-strict
+   make test
+   make build
+   make debug
+   ```
+
+If you only ever plan to run this project on this one machine, Option A is
+simpler and does everything you need. Option B is worth doing once before
+submission, since it proves the project works exactly the way the README
+tells an evaluator to run it.
+
+---
+
 ## Part 1 — One-shot automated check
 
 ```bash
