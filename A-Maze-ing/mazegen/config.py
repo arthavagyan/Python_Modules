@@ -1,11 +1,4 @@
-"""Configuration file parsing and validation for A-Maze-ing.
-
-Reads the plain KEY=VALUE file by hand (line numbers, comments, syntax
-errors are simple enough to check directly), then hands the resulting raw
-string dict to a Pydantic model for schema validation: required fields,
-type coercion, and range/consistency checks all come from one declarative
-model instead of a long chain of hand-written checks.
-"""
+"""Configuration file parsing and validation for A-Maze-ing."""
 
 import random
 from pathlib import Path
@@ -20,10 +13,7 @@ _REQUIRED_KEYS = {"width", "height", "entry", "exit", "output_file", "perfect"}
 
 class ConfigError(Exception):
     """Raised when the configuration file is missing, unreadable, or has
-    a syntax error (missing '=', missing required key). Schema-level
-    problems (bad types, out-of-bounds values, ...) surface instead as a
-    ``pydantic.ValidationError`` straight out of ``MazeConfig``, so callers
-    should catch both."""
+    a syntax error."""
 
 
 class MazeConfig(BaseModel):
@@ -51,8 +41,7 @@ class MazeConfig(BaseModel):
 
         Args:
             value: A string in the format 'x,y', or an already-parsed
-                tuple (accepted as-is, e.g. when building a MazeConfig
-                directly from Python rather than from a config file).
+                tuple.
 
         Returns:
             A tuple of two integers (x, y).
@@ -83,7 +72,7 @@ class MazeConfig(BaseModel):
 
     @model_validator(mode="after")
     def _validate_bounds(self) -> "MazeConfig":
-        """Cross-field checks that need more than one field at a time."""
+        """Cross-field checks: entry/exit bounds and distinctness."""
         for name in ("entry", "exit"):
             x, y = getattr(self, name)
             if not (0 <= x < self.width and 0 <= y < self.height):
@@ -103,8 +92,7 @@ def _parse_lines(path: str) -> dict[str, str]:
         path: Path to the configuration file.
 
     Returns:
-        Raw (unparsed) string values, keyed by lower-cased key. Blank
-        lines and lines starting with '#' are skipped.
+        Raw (unparsed) string values, keyed by lower-cased key.
 
     Raises:
         ConfigError: If the file can't be read, or a line is malformed.
@@ -147,7 +135,7 @@ def load_config(path: str) -> MazeConfig:
         ConfigError: If the file is missing, unreadable, or a required
             key is absent.
         pydantic.ValidationError: If a present value fails schema
-            validation (wrong type, out of range, inconsistent, ...).
+            validation.
     """
     raw = _parse_lines(path)
 

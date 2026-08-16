@@ -49,12 +49,7 @@ class Maze:
         """Return cell's in-bounds neighbors, regardless of walls."""
         neighbors: list[Cell] = []
 
-        directions = [
-            (0, -1),   # North
-            (1, 0),    # East
-            (0, 1),    # South
-            (-1, 0),   # West
-        ]
+        directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 
         for delta_x, delta_y in directions:
             x_new = cell.x + delta_x

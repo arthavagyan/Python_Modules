@@ -1,6 +1,4 @@
-"""Maze generation algorithms: perfect mazes via an iterative DFS
-backtracker, and playable (braided, looped) Pac-Man-style boards built
-on top of that same spanning tree."""
+"""Maze generation algorithms for the A-Maze-ing project."""
 
 import random
 from typing import Callable
@@ -8,8 +6,6 @@ from typing import Callable
 from mazegen.cell import Cell
 from mazegen.maze import Maze
 
-# How many extra loop-connections to attempt, as a multiple of the
-# maze's longer side, when topping up the loop count after braiding.
 _LOOP_TOPUP_FACTOR = 2
 _BRAID_PASSES = 3
 
@@ -30,7 +26,6 @@ class MazeGenerator:
         self.maze: Maze = Maze(width, height)
         self.rng: random.Random = random.Random(seed)
 
-    # -- perfect maze --------------------------------------------------- #
     def generate_perfect(
         self,
         start_x: int,
@@ -39,16 +34,10 @@ class MazeGenerator:
     ) -> Maze:
         """Generate a perfect maze using an iterative DFS backtracker.
 
-        Cells already marked ``is_visited`` (the reserved '42' pattern)
-        are skipped automatically: the backtracker never opens a wall to
-        or from them, so they stay fully closed.
-
         Args:
             start_x: X coordinate to start carving from.
             start_y: Y coordinate to start carving from.
-            on_step: Optional callback invoked after each wall removal,
-                receiving the in-progress maze. Used to animate generation
-                (bonus feature); has no effect on the resulting maze.
+            on_step: Optional callback invoked after each wall removal.
 
         Returns:
             The generated maze.
@@ -73,7 +62,6 @@ class MazeGenerator:
 
         return self.maze
 
-    # -- Pac-Man-ready (non-perfect) board ------------------------------ #
     def generate_playable(
         self,
         start_x: int,
@@ -82,13 +70,6 @@ class MazeGenerator:
         on_step: Callable[[Maze], None] | None = None,
     ) -> Maze:
         """Build a fully-connected, multi-route board with few dead-ends.
-
-        Three stages: carve a perfect spanning tree (guarantees every
-        non-reserved cell is reachable), braid away as many dead-ends as
-        possible, then top up loop connections if braiding didn't already
-        clear the ``min_loops`` bar. Every wall removal is still checked
-        against the "no 3x3 open area" and "never touch a reserved cell"
-        rules.
 
         Args:
             start_x: X coordinate to start carving from.
@@ -105,12 +86,7 @@ class MazeGenerator:
         return self.maze
 
     def _braid_dead_ends(self) -> None:
-        """Open one extra wall for every real (non-reserved) dead-end.
-
-        Only ever opens walls (never closes any), so this cannot break
-        connectivity, and every candidate is still checked against the
-        3x3-opening rule.
-        """
+        """Open one extra wall for every real (non-reserved) dead-end."""
         for _ in range(_BRAID_PASSES):
             cells = [
                 c for row in self.maze.grid for c in row
@@ -137,7 +113,7 @@ class MazeGenerator:
 
     def _ensure_min_loops(self, min_loops: int) -> None:
         """Add random connections until at least min_loops independent
-        routes exist (or attempts run out on a saturated grid)."""
+        routes exist."""
         max_attempts = (
             max(self.maze.width, self.maze.height) * _LOOP_TOPUP_FACTOR * 20
         )
@@ -168,9 +144,8 @@ class MazeGenerator:
         )
 
     def _loop_count(self) -> int:
-        """Independent cycles (edges - nodes + 1) over non-reserved cells,
-        assuming a single connected component (guaranteed by construction:
-        braiding and loop top-up only ever add edges to a spanning tree)."""
+        """Independent cycles (edges - nodes + 1) over non-reserved
+        cells."""
         nodes = sum(
             1 for row in self.maze.grid for c in row if not c.reserved
         )
@@ -193,10 +168,9 @@ class MazeGenerator:
                         edges += 1
         return edges - nodes + 1 if nodes else 0
 
-    # -- shared "no 3x3 open area" rule ---------------------------------- #
     def _is_2x2_open(self, top_left_x: int, top_left_y: int) -> bool:
         """Whether the 2x2 block with this top-left corner has every
-        internal wall open (all four cells mutually connected)."""
+        internal wall open."""
         if top_left_x < 0 or top_left_y < 0:
             return False
         if not self.maze.is_inside_the_maze(top_left_x + 1, top_left_y + 1):
@@ -213,9 +187,8 @@ class MazeGenerator:
                 and not br.north and not br.west)
 
     def _is_3x3_open(self, top_left_x: int, top_left_y: int) -> bool:
-        """A 3x3 window is "open" iff its four overlapping 2x2 sub-blocks
-        (stride 1) are all open - together they cover every internal wall
-        of the 3x3 area, so this is exactly "no wall left inside it"."""
+        """Whether the 3x3 block with this top-left corner is fully
+        open."""
         if top_left_x < 0 or top_left_y < 0:
             return False
         if not self.maze.is_inside_the_maze(top_left_x + 2, top_left_y + 2):
@@ -240,7 +213,7 @@ class MazeGenerator:
         return creates_large
 
     def _restore_wall(self, a: Cell, b: Cell, dx: int, dy: int) -> None:
-        """Put the wall btw a and b back up, given their offset (dx, dy)."""
+        """Put the wall between a and b back up."""
         if (dx, dy) == (0, -1):
             a.north, b.south = True, True
         elif (dx, dy) == (1, 0):
@@ -250,13 +223,11 @@ class MazeGenerator:
         elif (dx, dy) == (-1, 0):
             a.west, b.east = True, True
 
-    # -- kept as a lower-level building block ---------------------------- #
     def add_loops(self, extra_connections: int) -> None:
         """Add up to extra_connections random loop connections.
 
-        A lower-level primitive kept for direct use (e.g. from tests or a
-        custom bonus algorithm); generate_playable calls _ensure_min_loops
-        instead, which targets a loop *count* rather than an attempt budget.
+        Args:
+            extra_connections: Number of extra connections to add.
         """
         added = 0
         attempts = 0

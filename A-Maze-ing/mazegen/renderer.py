@@ -1,23 +1,14 @@
-"""Unicode box-drawing terminal renderer for the maze.
-
-Each grid intersection is drawn with the box-drawing character that
-matches exactly which of the (up to four) wall segments touch it — a
-stub, a straight line, a corner, a T, or a full cross — the same
-technique as classic ASCII/Unicode maze art. The shortest path and the
-entry/exit cells are overlaid as coloured markers on top of the line
-art, so the corridor a player should follow stays visually distinct
-from ordinary open space.
-"""
+"""Unicode box-drawing terminal renderer for the maze."""
 
 import os
 
 from mazegen.maze import Maze
 
 _COLOR_PALETTE = [
-    "\033[97m",  # white
-    "\033[92m",  # green
-    "\033[96m",  # cyan
-    "\033[95m",  # pink
+    "\033[97m",
+    "\033[92m",
+    "\033[96m",
+    "\033[95m",
 ]
 _RESET = "\033[0m"
 _ENTRY_COLOR = "\033[33m"
@@ -29,33 +20,28 @@ _DIRECTION_DELTAS = {"N": (0, -1), "E": (1, 0), "S": (0, 1), "W": (-1, 0)}
 Edge = tuple[str, int, int]
 Coord = tuple[int, int]
 
-# Box-drawing character for a wall junction, indexed by a 4-bit mask of
-# which segments touch it: bit 0=North, 1=East, 2=South, 3=West. A
-# junction with 0 or 1 active segments still needs a glyph (a stub end),
-# 2 opposite segments needs a straight line, 2 adjacent needs a corner,
-# 3 needs a T-piece, and 4 needs a full cross.
 _JUNCTION_CHAR = {
     0b0000: " ",
-    0b0001: "╵",  # stub up
-    0b0010: "╶",  # stub right
-    0b0011: "└",  # corner
-    0b0100: "╷",  # stub down
-    0b0101: "│",  # vertical line
-    0b0110: "┌",  # corner
-    0b0111: "├",  # T
-    0b1000: "╴",  # stub left
-    0b1001: "┘",  # corner
-    0b1010: "─",  # horizontal line
-    0b1011: "┴",  # T
-    0b1100: "┐",  # corner
-    0b1101: "┤",  # T
-    0b1110: "┬",  # T
-    0b1111: "┼",  # cross
+    0b0001: "╵",
+    0b0010: "╶",
+    0b0011: "└",
+    0b0100: "╷",
+    0b0101: "│",
+    0b0110: "┌",
+    0b0111: "├",
+    0b1000: "╴",
+    0b1001: "┘",
+    0b1010: "─",
+    0b1011: "┴",
+    0b1100: "┐",
+    0b1101: "┤",
+    0b1110: "┬",
+    0b1111: "┼",
 }
 
 
 def clear_screen() -> None:
-    """Clear the terminal screen, used between animation frames."""
+    """Clear the terminal screen."""
     os.system("cls" if os.name == "nt" else "clear")
 
 
@@ -67,19 +53,18 @@ def edge_between(a: Coord, b: Coord) -> Edge:
         b: (x, y) coordinates of the neighbouring cell moved to.
 
     Returns:
-        An ("h"|"v", x, y) tuple identifying the shared edge between the
-        two cells, used to overlay the solved path onto the line art.
+        An ("h"|"v", x, y) tuple identifying the shared edge.
     """
     ax, ay = a
     bx, by = b
-    if ay == by:  # horizontal move -> vertical wall-gap segment
+    if ay == by:
         return ("v", max(ax, bx), ay)
-    return ("h", ax, max(ay, by))  # vertical move -> horizontal segment
+    return ("h", ax, max(ay, by))
 
 
 def path_to_cell_sequence(entry: Coord, path: list[str]) -> list[Coord]:
     """Convert a direction-letter path into the ordered sequence of cells
-    it visits, from entry to exit (both included).
+    it visits.
 
     Args:
         entry: Starting (x, y) coordinates.
@@ -101,7 +86,7 @@ def _build_corridor_overlay(
     sequence: list[Coord],
 ) -> tuple[set[Coord], set[Edge]]:
     """Compute the cells and wall-gap segments a cell sequence passes
-    through, so it can be rendered as a continuous dotted corridor."""
+    through."""
     cells: set[Coord] = set(sequence)
     edges: set[Edge] = {
         edge_between(sequence[i], sequence[i + 1])
@@ -111,16 +96,14 @@ def _build_corridor_overlay(
 
 
 def _horiz_wall(maze: Maze, x: int, y: int) -> bool:
-    """Whether there is a horizontal wall segment at column x, above
-    row y (or below the last row, when y == maze.height)."""
+    """Whether there is a horizontal wall segment at column x, row y."""
     if y < maze.height:
         return maze.get_cell(x, y).north
     return maze.get_cell(x, maze.height - 1).south
 
 
 def _vert_wall(maze: Maze, x: int, y: int) -> bool:
-    """Whether there is a vertical wall segment at row y, left of
-    column x (or right of the last column, when x == maze.width)."""
+    """Whether there is a vertical wall segment at column x, row y."""
     if x < maze.width:
         return maze.get_cell(x, y).west
     return maze.get_cell(maze.width - 1, y).east
@@ -139,13 +122,13 @@ def _junction_glyph(maze: Maze, x: int, y: int) -> str:
     """
     mask = 0
     if y > 0 and _vert_wall(maze, x, y - 1):
-        mask |= 0b0001  # North
+        mask |= 0b0001
     if x < maze.width and _horiz_wall(maze, x, y):
-        mask |= 0b0010  # East
+        mask |= 0b0010
     if y < maze.height and _vert_wall(maze, x, y):
-        mask |= 0b0100  # South
+        mask |= 0b0100
     if x > 0 and _horiz_wall(maze, x - 1, y):
-        mask |= 0b1000  # West
+        mask |= 0b1000
     return _JUNCTION_CHAR[mask]
 
 
@@ -162,8 +145,8 @@ def render(
         maze: The maze to render.
         entry: (x, y) entry coordinates.
         exit_: (x, y) exit coordinates.
-        path: Optional ordered sequence of (x, y) coordinates from entry to
-            exit (inclusive): the final shortest path, once known.
+        path: Optional ordered sequence of (x, y) coordinates from entry
+            to exit (inclusive).
         color_index: Index into the wall colour palette (wraps around).
 
     Returns:

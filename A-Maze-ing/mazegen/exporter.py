@@ -1,5 +1,4 @@
-"""Writes a Maze to the hexadecimal output file format required by the
-subject (one hex digit per cell, bit = wall closed: N=1, E=2, S=4, W=8)."""
+"""Writes a Maze to the hexadecimal output file format."""
 
 from mazegen.cell import Cell
 from mazegen.maze import Maze
@@ -7,7 +6,6 @@ from mazegen.maze import Maze
 
 def _cell_hex_digit(cell: Cell) -> str:
     """Return the hexadecimal representation of a maze cell."""
-
     cell_hex_value = 0
     if cell.north:
         cell_hex_value |= 1

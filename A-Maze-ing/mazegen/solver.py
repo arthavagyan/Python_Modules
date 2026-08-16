@@ -32,8 +32,8 @@ def _open_neighbors(maze: Maze, current: Cell) -> list[tuple[str, Cell]]:
 def _rebuild_path(
     came_from: dict[Cell, tuple[Cell, str]], goal: Cell, start: Cell
 ) -> list[str]:
-    """Walk came_from backward from goal to start, returning the direction
-    letters in forward order (empty list if goal was never reached)."""
+    """Walk came_from backward from goal to start, returning the
+    direction letters in forward order."""
     if goal not in came_from and goal is not start:
         return []
     path: list[str] = []
@@ -52,7 +52,17 @@ def solve_bfs(
     exit_: tuple[int, int],
     on_step: Callable[[Cell], None] | None = None,
 ) -> list[str]:
-    """Shortest path via breadth-first search."""
+    """Shortest path via breadth-first search.
+
+    Args:
+        maze: The maze to solve.
+        entry: Entry coordinates.
+        exit_: Exit coordinates.
+        on_step: Optional callback invoked for each visited cell.
+
+    Returns:
+        Shortest path as a list of direction letters.
+    """
     start = maze.get_cell(*entry)
     goal = maze.get_cell(*exit_)
 
@@ -83,9 +93,17 @@ def solve_astar(
     exit_: tuple[int, int],
     on_step: Callable[[Cell], None] | None = None,
 ) -> list[str]:
-    """Shortest path via A* with the Manhattan-distance heuristic. Every
-    step costs 1, so it returns a path the same length as solve_bfs, but
-    usually explores fewer cells."""
+    """Shortest path via A* with the Manhattan-distance heuristic.
+
+    Args:
+        maze: The maze to solve.
+        entry: Entry coordinates.
+        exit_: Exit coordinates.
+        on_step: Optional callback invoked for each visited cell.
+
+    Returns:
+        Shortest path as a list of direction letters.
+    """
     start = maze.get_cell(*entry)
     goal = maze.get_cell(*exit_)
 

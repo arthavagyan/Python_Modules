@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 """A-Maze-ing: maze generator, solver, exporter, and terminal viewer.
 
-Entrypoint only. All generation, solving, rendering, and exporting logic
-lives in the reusable mazegen package (see mazegen/app.py for the CLI
-orchestration, and mazegen/__init__.py for the standalone generator API
-that other projects can import independently).
-
 Usage:
     python3 a_maze_ing.py config.txt
 """
@@ -48,7 +43,7 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\nInterrupted, exiting.")
         return 0
-    except Exception as exc:  # noqa: BLE001 - must never crash per subject
+    except Exception as exc:  # noqa: BLE001
         print(f"Error while running the maze: {exc}", file=sys.stderr)
         return 1
 

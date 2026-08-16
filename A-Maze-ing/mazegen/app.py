@@ -27,12 +27,10 @@ def build_maze(
 
     Args:
         cfg: Validated maze configuration.
-        seed: Seed to use for this specific generation (may differ from
-            cfg.seed, e.g. when the user asks to re-generate).
+        seed: Seed to use for this specific generation.
 
     Returns:
-        A tuple of (generator holding the built maze, shortest path as
-        direction letters).
+        A tuple of (generator holding the built maze, shortest path).
     """
     generator = MazeGenerator(cfg.width, cfg.height, seed=seed)
 
@@ -72,10 +70,8 @@ def build_maze(
 
 def _make_generation_callback(cfg: MazeConfig) -> Callable[[Maze], None]:
     """Build an on_step callback that redraws the maze after each wall
-    removal, used to animate generation when cfg.animate is True."""
+    removal."""
     def on_step(maze: Maze) -> None:
-        """Redraw the maze and pause briefly, called after each wall
-        removal during generation to animate the carving process."""
         clear_screen()
         print(render(maze, cfg.entry, cfg.exit))
         time.sleep(_ANIMATION_DELAY_SECONDS)
@@ -103,8 +99,7 @@ def _animate_path_reveal(
 def write_output(
     generator: MazeGenerator, cfg: MazeConfig, path: list[str]
 ) -> None:
-    """Export the maze to cfg's output file, warning instead of crashing
-    if the file can't be written."""
+    """Export the maze to cfg's output file."""
     try:
         export_maze(
             generator.maze,
@@ -123,7 +118,7 @@ def write_output(
 
 def run(cfg: MazeConfig) -> None:
     """Build the initial maze, write it out, then run the interactive
-    menu loop (re-generate, toggle path, rotate colours, quit)."""
+    menu loop."""
     generator, path = build_maze(cfg, cfg.seed)
     write_output(generator, cfg, path)
 

@@ -1,13 +1,4 @@
-"""Tests covering the core invariants the subject requires:
-
-- a PERFECT maze is a spanning tree (exactly nodes-1 edges);
-- BFS/A* always find a path on a generated maze;
-- wall data is coherent between neighbouring cells;
-- non-perfect boards never contain a fully-open 3x3 area and guarantee
-  MIN_LOOPS independent routes;
-- the "42" pattern never overlaps the cells that must stay open;
-- invalid configuration is rejected with a clear error, never a crash.
-"""
+"""Tests for maze generation, solving, and configuration validation."""
 
 from pathlib import Path
 
@@ -23,8 +14,7 @@ from mazegen.utils import get_42_pattern_cells, get_key_cells
 
 
 def _count_edges_and_nodes(maze: Maze) -> tuple[int, int]:
-    """Count open connections and non-reserved cells, from the public
-    Cell API only (independent of any generator internals)."""
+    """Count open connections and non-reserved cells."""
     nodes = sum(1 for row in maze.grid for c in row if not c.reserved)
     edges = 0
     for row in maze.grid:
@@ -66,8 +56,6 @@ def _has_fully_open_3x3(maze: Maze) -> bool:
     return False
 
 
-# -- generation -------------------------------------------------------- #
-
 def test_perfect_maze_is_a_spanning_tree() -> None:
     generator = MazeGenerator(width=12, height=10, seed=1)
     generator.generate_perfect(0, 0)
@@ -101,8 +89,6 @@ def test_playable_maze_key_cells_never_reserved() -> None:
         assert not generator.maze.get_cell(x, y).reserved
 
 
-# -- wall coherence ------------------------------------------------------ #
-
 @pytest.mark.parametrize("seed", [1, 2, 3])
 def test_wall_coherence_between_neighbours(seed: int) -> None:
     generator = MazeGenerator(width=10, height=8, seed=seed)
@@ -119,8 +105,6 @@ def test_wall_coherence_between_neighbours(seed: int) -> None:
                 assert cell.south == neighbor.north
 
 
-# -- solving --------------------------------------------------------------- #
-
 @pytest.mark.parametrize("solve", [solve_bfs, solve_astar])
 def test_solver_always_finds_a_path(solve: object) -> None:
     generator = MazeGenerator(width=12, height=10, seed=9)
@@ -136,8 +120,6 @@ def test_solver_always_finds_a_path(solve: object) -> None:
     assert (x, y) == (11, 9)
 
 
-# -- "42" pattern ----------------------------------------------------------- #
-
 def test_42_pattern_never_overlaps_key_cells() -> None:
     width, height = 25, 15
     avoid = get_key_cells(width, height)
@@ -150,8 +132,6 @@ def test_42_pattern_never_overlaps_key_cells() -> None:
 def test_42_pattern_none_when_maze_too_small() -> None:
     assert get_42_pattern_cells(5, 5) is None
 
-
-# -- config validation -------------------------------------------------- #
 
 def test_load_config_missing_file() -> None:
     with pytest.raises(ConfigError):

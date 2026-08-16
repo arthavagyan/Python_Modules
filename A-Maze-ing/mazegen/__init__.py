@@ -1,16 +1,4 @@
-"""mazegen: reusable maze generation and solving library.
-
-This package provides tools for:
-- maze creation,
-- maze generation algorithms (perfect + playable/Pac-Man board),
-- path solving (BFS, A*),
-- configuration loading,
-- maze exporting,
-- utility helpers (the "42" pattern).
-
-The public API is exposed through this module. See the "Reusable module"
-section of the project README for usage examples.
-"""
+"""mazegen: reusable maze generation and solving library."""
 
 from mazegen.cell import Cell
 from mazegen.config import ConfigError, MazeConfig, load_config

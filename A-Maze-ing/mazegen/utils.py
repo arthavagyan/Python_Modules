@@ -1,12 +1,8 @@
 """Utility helpers for the A-Maze-ing project: the '42' pattern and the
-cells a Pac-Man-style board must always keep open (the four corners, the
-centre, and the entry/exit)."""
+cells a Pac-Man-style board must always keep open."""
 
 from mazegen.maze import Maze
 
-# Pixel-art glyphs for "4" and "2": a '1' means "this maze cell is part
-# of the digit and must stay fully closed". 5 wide x 7 tall so the shape
-# reads as a real digit once carved into the maze, not just a blob.
 _GLYPH_4 = [
     "10001",
     "10001",
@@ -34,12 +30,7 @@ _TOTAL_H = _DIGIT_H
 
 
 def get_key_cells(width: int, height: int) -> set[tuple[int, int]]:
-    """The four corners and the centre: must always stay open corridors.
-
-    These are where a Pac-Man-style board places the player (centre) and
-    the ghosts / super-pacgums (corners), so the '42' pattern is not
-    allowed to cover any of them.
-    """
+    """The four corners and the centre: must always stay open corridors."""
     return {
         (0, 0),
         (width - 1, 0),
@@ -50,8 +41,7 @@ def get_key_cells(width: int, height: int) -> set[tuple[int, int]]:
 
 
 def _pattern_cells_at(origin_x: int, origin_y: int) -> list[tuple[int, int]]:
-    """The '42' pattern's reserved cells if drawn with this top-left
-    origin (before checking it against anything)."""
+    """The '42' pattern's reserved cells for this top-left origin."""
     cells: list[tuple[int, int]] = []
 
     for row_index, row in enumerate(_GLYPH_4):
@@ -75,8 +65,7 @@ def get_42_pattern_cells(
 ) -> list[tuple[int, int]] | None:
     """Compute the (x, y) coordinates that must stay fully closed to draw
     '42', choosing a placement whose bounding box never touches a cell in
-    avoid (corners, centre, entry, exit) - so the digit shape is always
-    drawn intact and fully isolated, never with a hole punched in it.
+    avoid.
 
     Args:
         width: Maze width.
@@ -86,8 +75,8 @@ def get_42_pattern_cells(
 
     Returns:
         List of (x, y) coordinates, or None if the maze is too small to
-        fit the pattern with at least a 1-cell margin on every side, or
-        if every valid placement collides with an avoided cell.
+        fit the pattern, or if every valid placement collides with an
+        avoided cell.
     """
     if width < _TOTAL_W + 2 or height < _TOTAL_H + 2:
         return None
@@ -100,8 +89,6 @@ def get_42_pattern_cells(
     centered_x = (width - _TOTAL_W) // 2
     centered_y = (height - _TOTAL_H) // 2
 
-    # Try every valid top-left origin, closest to centered first, and use
-    # the first one whose cells don't collide with an avoided cell.
     candidates = sorted(
         (
             (ox, oy)
@@ -124,15 +111,7 @@ def apply_42_pattern(
     exit_: tuple[int, int] | None = None,
 ) -> bool:
     """Reserve the '42' pattern cells so the generator leaves them fully
-    closed and unreachable. Must be called before running generation
-    (marks cells as already visited *and* reserved, so neither the DFS
-    backtracker nor the later braiding/loop steps ever touch a wall on
-    any of their sides).
-
-    The pattern is placed so it never overlaps the four corners, the
-    centre, or (if given) the entry/exit - all of those must stay open,
-    reachable corridors, while every '42' cell stays fully walled off and
-    unreachable, as required.
+    closed and unreachable.
 
     Args:
         maze: The (empty, freshly built) maze to apply the pattern to.
@@ -141,8 +120,7 @@ def apply_42_pattern(
 
     Returns:
         True if the pattern was applied, False if the maze is too small
-        or no placement avoids the cells that must stay open (caller
-        should print a warning either way).
+        or no placement avoids the cells that must stay open.
     """
     avoid = get_key_cells(maze.width, maze.height)
     if entry is not None:
