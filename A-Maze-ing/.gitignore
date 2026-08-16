@@ -11,3 +11,6 @@ dist/
 
 # generated at runtime, not part of the submission
 maze.txt
+
+# personal working notes, not part of the submission
+dev-notes/
